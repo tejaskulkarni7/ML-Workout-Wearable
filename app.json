@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "ML-Wearable",
-    "slug": "ML-Wearable",
+    "name": "ML-Workout-Wearable",
+    "slug": "ML-Workout-Wearable",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
