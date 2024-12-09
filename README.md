@@ -14,7 +14,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
    ```bash
     remember to go to your wifi connection settings and select Private connection (to allow access to other connections)
-    
+    npx expo login
     npx expo start --tunnel
    ```
 

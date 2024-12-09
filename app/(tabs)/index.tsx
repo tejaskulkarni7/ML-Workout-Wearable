@@ -1,70 +1,138 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
+import React, { useEffect } from 'react';
+import { StyleSheet, View, TouchableOpacity, Text, ScrollView } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { router } from 'expo-router';
+import { Account } from 'react-native-appwrite'; // Assuming you're using Appwrite for session management
+import { client } from '@/lib/appwrite';
 
 export default function HomeScreen() {
+  useEffect(() => {
+    // Check if a session exists, if not, navigate to the signup page
+    const account = new Account(client); // Use the initialized client
+
+    account.getSession('current')
+      .then(session => {
+        // Session exists; user is logged in
+        console.log('User session:', session);
+      })
+      .catch(error => {
+        // No session found; navigate to signup page
+        console.error('No active session found:', error);
+        router.push('/signup');
+      });
+  }, []);
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome Tejas!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      {/* Top Navigation Bar */}
+      <View style={styles.topBar}>
+        {/* Home Button on the Left */}
+        <TouchableOpacity onPress={() => router.push('/')} style={styles.topButton}>
+          <Ionicons name="home" size={30} color="#fff" />
+        </TouchableOpacity>
+        
+        {/* Spacer to push the settings button to the right */}
+        <View style={styles.spacer} />
+  
+        {/* Settings Button on the Right */}
+        <TouchableOpacity onPress={() => router.push('/settings')} style={styles.topButton}>
+          <Ionicons name="settings" size={30} color="#fff" />
+        </TouchableOpacity>
+      </View>
+      
+      <ScrollView style={styles.contentContainer}>
+      <View style={styles.header}>
+        <View style={styles.titleContainer}>
+          <Text style={{ color: 'white', fontSize: 30, fontWeight: 'bold' }}>Your Weekly Snapshot</Text>
+        </View>
+      </View>
+      </ScrollView>
+  
+      {/* Centered Rectangular Component */}
+      <View style={styles.centeredComponent}>
+        <Text style={styles.componentText}>Current Goal</Text>
+      </View>
+  
+      {/* Bottom Navigation Buttons */}
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={() => router.push('/history')} style={styles.bottomButton}>
+          <Ionicons name="time" size={30} color="#fff" />
+          <Text style={styles.buttonText}>History</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/record')} style={styles.bottomButton}>
+          <Ionicons name="play-circle" size={50} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/goals')} style={styles.bottomButton}>
+          <Ionicons name="pencil" size={30} color="#fff" />
+          <Text style={styles.buttonText}>Goals</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
   );
+  
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#151718',
+    justifyContent: 'space-between',
+  },
+  topBar: {
+    flexDirection: 'row',
+    padding: 10,
+    backgroundColor: '#151718',
+    alignItems: 'center',
+  },
+  topButton: {
+    padding: 10,
+  },
+  header: {
+    backgroundColor: '#151718',
+    paddingVertical: 20,
+    alignItems: 'center',
+  },
   titleContainer: {
     flexDirection: 'row',
+    gap: 8,
+  },
+  centeredComponent: {
+    backgroundColor: '#222',
+    width: '80%',
+    height: 150,
+    borderRadius: 20,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    alignSelf: 'center',
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  componentText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#151718',
+    paddingVertical: 5,
+    borderTopWidth: 1,
+    borderTopColor: '#333',
+  },
+  bottomButton: {
+    alignItems: 'center',
+    padding: 10,
+  },
+  contentContainer: {
+    flex: 1,
+  },
+  spacer: {
+    flex: 1, // Takes up all the remaining space
+  },  
+  buttonText: {
+    color: '#fff',
+    marginTop: 5,
+    fontSize: 14,
   },
 });
