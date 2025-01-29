@@ -53,12 +53,17 @@ export default function GoalsScreen() {
       exercise: doc.exercise,
       reps_goal: doc.reps_goal,
       current_rep: doc.current_rep,
-      user_id: doc.user_id
+      user_id: doc.user_id,
+      createdAt: doc.createdAt
     }));
 
     setGoals(goalsData); // Store mapped goals in state
   } catch (error) {
-    console.error('Error fetching goals:', error.message);
+    if (error instanceof Error) {
+      console.error('Error fetching goals:', error.message);
+    } else {
+      console.error('Error fetching goals:', error);
+    }
   }
 };
 
@@ -75,8 +80,11 @@ export default function GoalsScreen() {
       toggleModal(); // Close the modal after creating the goal
       fetchGoals(); // Refresh goals after adding a new one
     } catch (error) {
-      console.error('Error creating goal:', error.message);
-      alert(error.message || 'Failed to create goal. Please try again.');
+      if (error instanceof Error) {
+        console.error('Error creating goals:', error.message);
+      } else {
+        console.error('Error creating goals:', error);
+      }
     }
   };
 
