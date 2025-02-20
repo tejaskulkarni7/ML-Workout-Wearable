@@ -1,14 +1,24 @@
-import React from 'react';
-import { StyleSheet, ScrollView, View, Text, Image, Platform, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, ScrollView, View, Text, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { LineChart } from "react-native-chart-kit"; // Graph library for real-time updates
 import { router } from 'expo-router';
 
 export default function RecordScreen() {
+  const [dataPoints, setDataPoints] = useState([70]); // Initial dummy data for heart rate
+  const [heartRate, setHeartRate] = useState(70); // Current numerical value for live feed
+
+  // Dummy Data Generator (Simulates live feed)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newRate = Math.max(60, Math.min(120, heartRate + (Math.random() * 10 - 5))); // Simulate random values between 60-120
+      setHeartRate(newRate);
+      setDataPoints((prev) => [...prev.slice(-20), newRate]); // Keep only the last 20 data points
+    }, 500); // Updates every second
+
+    return () => clearInterval(interval); // Cleanup on unmount
+  }, [heartRate]);
+
   return (
     <View style={styles.container}>
       {/* Header Section */}
@@ -18,60 +28,40 @@ export default function RecordScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Scrollable Content */}
+      {/* Main Content */}
       <ScrollView style={styles.contentContainer}>
-      <View style={styles.header}>
-        <View style={styles.titleContainer}>
-          <Text style={{ color: 'white', fontSize: 30, fontWeight: 'bold' }}>Record Workout</Text>
+        <View style={styles.header}>
+          <Text style={styles.title}>Record Workout</Text>
         </View>
-      </View>
 
-        {/* Content Section */}
-        <View style={styles.content}>
-          <ThemedText>This app includes example code to help you get started.</ThemedText>
-
-          {/* Collapsible Sections */}
-          <Collapsible title="File-based routing">
-            <ThemedText>
-              This app has two screens:{' '}
-              <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-              <ThemedText type="defaultSemiBold">app/(tabs)/history.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText>
-              The layout file in{' '}
-              <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText> sets up the
-              tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="link">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedText>
-              You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-              <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-            </ThemedText>
-          </Collapsible>
-
-          <Collapsible title="Images">
-            <ThemedText>
-              For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText>{' '}
-              and <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-              different screen densities
-            </ThemedText>
-            <Image
-              source={require('@/assets/images/react-logo.png')}
-              style={{ alignSelf: 'center' }}
-            />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="link">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+        {/* Live Heart Rate Numerical Value */}
+        <View style={styles.liveValueContainer}>
+          <Text style={styles.liveValueText}>Live Heart Rate:</Text>
+          <Text style={styles.heartRate}>{Math.round(heartRate)} bpm</Text>
         </View>
+
+        {/* Real-Time Graph */}
+        <LineChart
+          data={{
+            labels: Array.from({ length: dataPoints.length }, (_, i) => (i + 1).toString()),
+            datasets: [{ data: dataPoints }],
+          }}
+          width={350} // Adjust width
+          height={200} // Adjust height
+          yAxisSuffix=" bpm"
+          chartConfig={{
+            backgroundGradientFrom: "#1e2923",
+            backgroundGradientTo: "#08130d",
+            decimalPlaces: 0,
+            color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
+            labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          }}
+          bezier
+          style={styles.graph}
+        />
       </ScrollView>
 
-      {/* Bottom Navigation Buttons */}
+      {/* Bottom Navigation */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={() => router.push('/history')} style={styles.bottomButton}>
           <Ionicons name="time" size={30} color="#fff" />
@@ -107,17 +97,32 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    backgroundColor: '#151718',
     padding: 20,
     alignItems: 'center',
   },
-  titleContainer: {
-    flexDirection: 'row',
-    marginTop: 10,
-    gap: 8,
+  title: {
+    color: 'white',
+    fontSize: 30,
+    fontWeight: 'bold',
   },
-  content: {
-    padding: 20,
+  liveValueContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  liveValueText: {
+    fontSize: 20,
+    color: '#fff',
+  },
+  heartRate: {
+    fontSize: 40,
+    fontWeight: 'bold',
+    color: '#ff4d4d',
+    marginTop: 10,
+  },
+  graph: {
+    marginVertical: 20,
+    borderRadius: 10,
+    alignSelf: 'center',
   },
   buttonContainer: {
     flexDirection: 'row',
