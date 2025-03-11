@@ -1,14 +1,90 @@
-import React from 'react';
-import { StyleSheet, ScrollView, View, Text, Image, Platform, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, ScrollView, View, Text, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-
-import { Collapsible } from '@/components/Collapsible';
-import { ExternalLink } from '@/components/ExternalLink';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { router } from 'expo-router';
+import { databases, appwriteConfig, account } from '@/lib/appwrite';
+import { Query } from 'react-native-appwrite';
+
+interface Exercise {
+  exercise: string;
+  reps: number;
+}
+
+interface Workout {
+  workoutId: string;
+  date: string;
+  exercises: Exercise[];
+  averageHeartRate: string;
+}
 
 export default function HistoryScreen() {
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+
+  useEffect(() => {
+    fetchWorkoutHistory();
+  }, []);
+
+  const fetchWorkoutHistory = async () => {
+    try {
+      const user = await account.get();
+      const userId = user.$id;
+
+      // Fetch all workouts for the current user
+      const workoutResponse = await databases.listDocuments(
+        appwriteConfig.databaseId,
+        appwriteConfig.workoutCollectionId,
+        [Query.equal('user_id', userId)]
+      );
+
+      const workoutData = workoutResponse.documents;
+
+      // Fetch all sets for each workout and aggregate data
+      const workoutHistory = await Promise.all(
+        workoutData.map(async (workout) => {
+          const setsResponse = await databases.listDocuments(
+            appwriteConfig.databaseId,
+            appwriteConfig.setCollectionId,
+            [Query.equal('workout_id', workout.$id)]
+          );
+
+          const setsData = setsResponse.documents;
+
+          // Aggregate data for the workout
+          const aggregatedData = setsData.reduce(
+            (acc: { exercises: Exercise[]; totalHeartRate: number; setCount: number }, set: any) => {
+              const existingExercise = acc.exercises.find(ex => ex.exercise === set.exercise);
+              if (existingExercise) {
+                existingExercise.reps += set.rep_count;
+              } else {
+                acc.exercises.push({ exercise: set.exercise, reps: set.rep_count });
+              }
+              acc.totalHeartRate += set.avghr;
+              acc.setCount += 1;
+              return acc;
+            },
+            { exercises: [], totalHeartRate: 0, setCount: 0 }
+          );
+
+          const averageHeartRate = aggregatedData.setCount > 0 ? (aggregatedData.totalHeartRate / aggregatedData.setCount).toFixed(1) : 'N/A';
+
+          return {
+            workoutId: workout.$id,
+            date: workout.date,
+            exercises: aggregatedData.exercises,
+            averageHeartRate,
+          };
+        })
+      );
+
+      // Sort workouts by date in descending order
+      workoutHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      setWorkouts(workoutHistory);
+    } catch (error) {
+      console.error('Error fetching workout history:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header Section */}
@@ -20,54 +96,29 @@ export default function HistoryScreen() {
 
       {/* Scrollable Content */}
       <ScrollView style={styles.contentContainer}>
-      <View style={styles.header}>
-        <View style={styles.titleContainer}>
-          <Text style={{ color: 'white', fontSize: 30, fontWeight: 'bold' }}>Workout History</Text>
+        <View style={styles.header}>
+          <View style={styles.titleContainer}>
+            <Text style={{ color: 'white', fontSize: 30, fontWeight: 'bold' }}>Workout History</Text>
+          </View>
         </View>
-      </View>
 
-        {/* Content Section */}
+        {/* Display Workout History */}
         <View style={styles.content}>
-          <ThemedText>This app includes example code to help you get started.</ThemedText>
-
-          {/* Collapsible Sections */}
-          <Collapsible title="File-based routing">
-            <ThemedText>
-              This app has two screens:{' '}
-              <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> and{' '}
-              <ThemedText type="defaultSemiBold">app/(tabs)/history.tsx</ThemedText>
-            </ThemedText>
-            <ThemedText>
-              The layout file in{' '}
-              <ThemedText type="defaultSemiBold">app/(tabs)/_layout.tsx</ThemedText> sets up the
-              tab navigator.
-            </ThemedText>
-            <ExternalLink href="https://docs.expo.dev/router/introduction">
-              <ThemedText type="link">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
-
-          <Collapsible title="Android, iOS, and web support">
-            <ThemedText>
-              You can open this project on Android, iOS, and the web. To open the web version, press{' '}
-              <ThemedText type="defaultSemiBold">w</ThemedText> in the terminal running this project.
-            </ThemedText>
-          </Collapsible>
-
-          <Collapsible title="Images">
-            <ThemedText>
-              For static images, you can use the <ThemedText type="defaultSemiBold">@2x</ThemedText>{' '}
-              and <ThemedText type="defaultSemiBold">@3x</ThemedText> suffixes to provide files for
-              different screen densities
-            </ThemedText>
-            <Image
-              source={require('@/assets/images/react-logo.png')}
-              style={{ alignSelf: 'center' }}
-            />
-            <ExternalLink href="https://reactnative.dev/docs/images">
-              <ThemedText type="link">Learn more</ThemedText>
-            </ExternalLink>
-          </Collapsible>
+          {workouts.length === 0 ? (
+            <Text style={styles.noWorkoutsText}>No workout history available.</Text>
+          ) : (
+            workouts.map((workout) => (
+              <View key={workout.workoutId} style={styles.workoutItem}>
+                <Text style={styles.workoutDate}>Date: {new Date(workout.date).toLocaleString()}</Text>
+                <Text style={styles.workoutAverageHeartRate}>Average Heart Rate: {workout.averageHeartRate} bpm</Text>
+                {workout.exercises.map((exercise, index) => (
+                  <Text key={index} style={styles.exerciseText}>
+                    {exercise.exercise}: {exercise.reps} reps
+                  </Text>
+                ))}
+              </View>
+            ))
+          )}
         </View>
       </ScrollView>
 
@@ -118,6 +169,32 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  noWorkoutsText: {
+    color: '#fff',
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  workoutItem: {
+    backgroundColor: '#333',
+    borderRadius: 10,
+    padding: 15,
+    marginVertical: 10,
+  },
+  workoutDate: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  workoutAverageHeartRate: {
+    color: '#fff',
+    fontSize: 16,
+    marginBottom: 10,
+  },
+  exerciseText: {
+    color: '#fff',
+    fontSize: 14,
   },
   buttonContainer: {
     flexDirection: 'row',

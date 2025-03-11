@@ -1,23 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, View, Text, TouchableOpacity } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { LineChart } from "react-native-chart-kit"; // Graph library for real-time updates
+import { LineChart } from "react-native-chart-kit"; 
 import { router } from 'expo-router';
+import { uploadRecording } from '@/lib/appwrite';
 
 export default function RecordScreen() {
   const [dataPoints, setDataPoints] = useState([70]); // Initial dummy data for heart rate
   const [heartRate, setHeartRate] = useState(70); // Current numerical value for live feed
+  const [isPlaying, setIsPlaying] = useState(false); // Play/Pause state
+  const [totalHeartRate, setTotalHeartRate] = useState(70); // Sum of heart rates for average calculation
+  const [heartRateCount, setHeartRateCount] = useState(1); // Number of recorded heart rates
 
-  // Dummy Data Generator (Simulates live feed)
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newRate = Math.max(60, Math.min(120, heartRate + (Math.random() * 10 - 5))); // Simulate random values between 60-120
-      setHeartRate(newRate);
-      setDataPoints((prev) => [...prev.slice(-20), newRate]); // Keep only the last 20 data points
-    }, 500); // Updates every second
+    let interval: NodeJS.Timeout;
+    if (isPlaying) {
+      interval = setInterval(() => {
+        const newRate = Math.max(60, Math.min(120, heartRate + (Math.random() * 10 - 5)));
+        setTotalHeartRate((prev) => prev + newRate);
+        setHeartRateCount((prev) => prev + 1);
+        setHeartRate(newRate);
+        setDataPoints((prev) => [...prev.slice(-20), newRate]); //keeps previous 20 data points on the graph
+      }, 500);
+    }
+    
+    return () => clearInterval(interval); // Cleanup on unmount or pause
+  }, [isPlaying, heartRate]);
 
-    return () => clearInterval(interval); // Cleanup on unmount
-  }, [heartRate]);
+
+  const averageHeartRate = heartRateCount > 0 ? (totalHeartRate / heartRateCount).toFixed(1) : "N/A";
+
+  const stopSimulation = () => {
+    setIsPlaying(false);
+    setHeartRate(70);
+    setDataPoints([70]);
+    handleRecordingUpload();
+  };
+
+  const handleRecordingUpload = async () => {
+    try {
+
+      await uploadRecording(averageHeartRate, "bench press", 15);
+      await uploadRecording(averageHeartRate, "deadlift", 9);
+
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Error uploading recording:', error.message);
+      } else {
+        console.error('Error uploading recording:', error);
+      }
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -38,6 +73,7 @@ export default function RecordScreen() {
         <View style={styles.liveValueContainer}>
           <Text style={styles.liveValueText}>Live Heart Rate:</Text>
           <Text style={styles.heartRate}>{Math.round(heartRate)} bpm</Text>
+          <Text>Average Heart Rate: {averageHeartRate} bpm</Text>
         </View>
 
         {/* Real-Time Graph */}
@@ -46,8 +82,8 @@ export default function RecordScreen() {
             labels: Array.from({ length: dataPoints.length }, (_, i) => (i + 1).toString()),
             datasets: [{ data: dataPoints }],
           }}
-          width={350} // Adjust width
-          height={200} // Adjust height
+          width={350}
+          height={200}
           yAxisSuffix=" bpm"
           chartConfig={{
             backgroundGradientFrom: "#1e2923",
@@ -61,15 +97,24 @@ export default function RecordScreen() {
         />
       </ScrollView>
 
+      {/*Stop Button*/}
+      {!isPlaying && (
+        <TouchableOpacity onPress={stopSimulation} style={styles.stopButton}>
+          <Ionicons name="stop-circle" size={70} color="red" />
+        </TouchableOpacity>
+      )}
       {/* Bottom Navigation */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity onPress={() => router.push('/history')} style={styles.bottomButton}>
           <Ionicons name="time" size={30} color="#fff" />
           <Text style={styles.buttonText}>History</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => router.push('/record')} style={styles.bottomButton}>
-          <Ionicons name="play-circle" size={50} color="#fff" />
+
+        {/* Play/Pause Button */}
+        <TouchableOpacity onPress={() => setIsPlaying(!isPlaying)} style={styles.bottomButton}>
+          <Ionicons name={isPlaying ? "pause-circle" : "play-circle"} size={50} color="#fff" />
         </TouchableOpacity>
+
         <TouchableOpacity onPress={() => router.push('/goals')} style={styles.bottomButton}>
           <Ionicons name="pencil" size={30} color="#fff" />
           <Text style={styles.buttonText}>Goals</Text>
@@ -141,4 +186,10 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 14,
   },
+  stopButton: {
+    position: 'absolute',
+    alignSelf: 'center',
+    top: '83%',
+    marginTop: -35,
+  },  
 });
