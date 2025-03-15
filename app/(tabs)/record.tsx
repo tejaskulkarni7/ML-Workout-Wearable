@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, View, Text, TouchableOpacity, PermissionsAndroid, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LineChart } from "react-native-chart-kit"; 
 import { router } from 'expo-router';
 import { uploadRecording } from '@/lib/appwrite';
+import { BleManager, Device } from 'react-native-ble-plx';
+
+const bleManager = new BleManager();
 
 export default function RecordScreen() {
   const [dataPoints, setDataPoints] = useState([70]); // Initial dummy data for heart rate
@@ -11,7 +14,9 @@ export default function RecordScreen() {
   const [isPlaying, setIsPlaying] = useState(false); // Play/Pause state
   const [totalHeartRate, setTotalHeartRate] = useState(70); // Sum of heart rates for average calculation
   const [heartRateCount, setHeartRateCount] = useState(1); // Number of recorded heart rates
-
+  const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
+  const [exercise, setExercise] = useState(''); // Exercise name
+  const [reps, setReps] = useState(0); // Repetition count
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -28,7 +33,6 @@ export default function RecordScreen() {
     return () => clearInterval(interval); // Cleanup on unmount or pause
   }, [isPlaying, heartRate]);
 
-
   const averageHeartRate = heartRateCount > 0 ? (totalHeartRate / heartRateCount).toFixed(1) : "N/A";
 
   const stopSimulation = () => {
@@ -36,14 +40,12 @@ export default function RecordScreen() {
     setHeartRate(70);
     setDataPoints([70]);
     handleRecordingUpload();
+    disconnectFromDevice();
   };
-
+  
   const handleRecordingUpload = async () => {
     try {
-
-      await uploadRecording(averageHeartRate, "bench press", 15);
-      await uploadRecording(averageHeartRate, "deadlift", 9);
-
+      await uploadRecording(averageHeartRate, exercise, reps);
     } catch (error) {
       if (error instanceof Error) {
         console.error('Error uploading recording:', error.message);
@@ -53,6 +55,101 @@ export default function RecordScreen() {
     }
   };
 
+  const requestPermissions = async () => {
+    if (Platform.OS === 'android') {
+      await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+        PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
+      ]);
+    }
+  };
+
+  const startScanning = async () => {
+    await requestPermissions();
+    bleManager.startDeviceScan(null, null, (error, device) => {
+      if (error) {
+        console.error('Error scanning for devices:', error);
+        return;
+      }
+
+      // Replace 'YourDeviceName' with the actual name of your BLE device
+      if (device && device.name === 'Tejas Server') {
+        bleManager.stopDeviceScan();
+        connectToDevice(device);
+      }
+    });
+  };
+
+  const connectToDevice = async (device: Device) => {
+    try {
+        // Connect to the device
+        const connectedDevice = await device.connect();
+        setConnectedDevice(connectedDevice);
+        console.log('Connected to device:', connectedDevice.name);
+
+        // Discover all services and characteristics
+        await connectedDevice.discoverAllServicesAndCharacteristics();
+        
+        // Monitor the characteristic for incoming data
+        connectedDevice.monitorCharacteristicForService(
+            '181C', // service UUID
+            '2AB4', // characteristic UUID
+            (error, characteristic) => {
+                if (error) {
+                    console.error('Error monitoring characteristic:', error);
+                    return;
+                }
+                if (characteristic?.value) {
+                    const data = Buffer.from(characteristic.value, 'base64').toString('utf-8');
+                    handleReceivedData(data);
+                }
+            }
+        );
+    } catch (error) {
+        console.error('Error connecting to device:', error);
+    }
+};
+
+const handleReceivedData = (data: string) => {
+    try {
+        // Assuming the server sends JSON data
+        const parsedData = JSON.parse(data);
+        const { exercise, reps, heartRate } = parsedData;
+
+        setExercise(exercise);
+        setReps(reps);
+        setHeartRate(heartRate);
+        setDataPoints((prev) => [...prev.slice(-20), heartRate]); // Update chart data
+    } catch (error) {
+        console.error('Error parsing received data:', error);
+    }
+};
+
+  const disconnectFromDevice = async () => {
+    if (connectedDevice) {
+      try {
+        await connectedDevice.cancelConnection();
+        setConnectedDevice(null);
+        console.log('Disconnected from device');
+      } catch (error) {
+        console.error('Error disconnecting from device:', error);
+      }
+    }
+  };
+
+  const handlePlayPause = () => {
+    if (isPlaying) {
+      // Pause simulation, but do not disconnect the device
+      setIsPlaying(false);
+    } else {
+      // Start scanning and device connection, and simulate data if not already connected
+      if (!connectedDevice) {
+        startScanning();
+      }
+      setIsPlaying(true);
+    }
+};
 
   return (
     <View style={styles.container}>
@@ -111,7 +208,7 @@ export default function RecordScreen() {
         </TouchableOpacity>
 
         {/* Play/Pause Button */}
-        <TouchableOpacity onPress={() => setIsPlaying(!isPlaying)} style={styles.bottomButton}>
+        <TouchableOpacity onPress={handlePlayPause} style={styles.bottomButton}>
           <Ionicons name={isPlaying ? "pause-circle" : "play-circle"} size={50} color="#fff" />
         </TouchableOpacity>
 

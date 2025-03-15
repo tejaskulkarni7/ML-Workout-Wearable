@@ -19,7 +19,7 @@ type GoalDocument = {
 export default function GoalsScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false); // State to control modal visibility
   const [newGoal, setNewGoal] = useState(''); // State for input field
-  const [selectedExercise, setSelectedExercise] = useState('benchPress'); // State for selected exercise
+  const [selectedExercise, setSelectedExercise] = useState('bench press'); // State for selected exercise
   const [goals, setGoals] = useState<GoalDocument[]>([]);
 
   // Toggle modal visibility
@@ -119,8 +119,11 @@ export default function GoalsScreen() {
             <Text style={styles.noGoalsText}>No goals added yet.</Text>
           ) : (
             goals.map((goal) => {
-              const currentRep = parseInt(goal.current_rep as unknown as string, 10);
+              let currentRep = parseInt(goal.current_rep as unknown as string, 10);
               const goalRep = parseInt(goal.reps_goal as unknown as string, 10);
+              if (currentRep > goalRep) {
+                currentRep = goalRep;
+              }
               const progress = Math.min((currentRep / goalRep) * 100, 100); // Progress in percentage
             
               return (
@@ -132,13 +135,13 @@ export default function GoalsScreen() {
                   >
                     <Ionicons name="trash" size={20} color="red" />
                   </TouchableOpacity>
-            
+              
                   {/* Exercise Name */}
                   <Text style={styles.goalText}>
                     {goal.exercise} - Goal: {goal.reps_goal} reps
                   </Text>
                   <Text style={styles.goalText}>Current: {goal.current_rep} reps</Text>
-            
+              
                   {/* Progress Bar */}
                   <View style={styles.progressBar}>
                     <View
@@ -194,7 +197,7 @@ export default function GoalsScreen() {
               style={[styles.picker, selectedExercise ? styles.selectedPicker : {}]} // Conditional styling
               dropdownIconColor="#fff" // Optional: Makes dropdown arrow white
             >
-              <Picker.Item label="Bench Press" value="benchPress" color="#000" />
+              <Picker.Item label="Bench Press" value="bench press" color="#000" />
               <Picker.Item label="Squat" value="squat" color="#000" />
               <Picker.Item label="Deadlift" value="deadlift" color="#000" />
             </Picker>
