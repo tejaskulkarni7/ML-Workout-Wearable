@@ -42,7 +42,7 @@ export default function RecordScreen() {
     handleRecordingUpload();
     disconnectFromDevice();
   };
-  
+
   const handleRecordingUpload = async () => {
     try {
       await uploadRecording(averageHeartRate, exercise, reps);
@@ -57,29 +57,47 @@ export default function RecordScreen() {
 
   const requestPermissions = async () => {
     if (Platform.OS === 'android') {
-      await PermissionsAndroid.requestMultiple([
+      const granted = await PermissionsAndroid.requestMultiple([
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
         PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT,
       ]);
+
+      if (
+        granted['android.permission.ACCESS_FINE_LOCATION'] !== PermissionsAndroid.RESULTS.GRANTED ||
+        granted['android.permission.BLUETOOTH_SCAN'] !== PermissionsAndroid.RESULTS.GRANTED ||
+        granted['android.permission.BLUETOOTH_CONNECT'] !== PermissionsAndroid.RESULTS.GRANTED
+      ) {
+        console.error("Location or Bluetooth permission denied");
+        return;
+      }
     }
   };
 
   const startScanning = async () => {
+    console.log('Starting Bluetooth scan...');
     await requestPermissions();
+    const timeout = setTimeout(() => {
+      bleManager.stopDeviceScan();
+      console.log('Scan timeout reached. Stopped scanning.');
+    }, 10000); // 10-second timeout for scanning
+   
     bleManager.startDeviceScan(null, null, (error, device) => {
       if (error) {
         console.error('Error scanning for devices:', error);
+        clearTimeout(timeout); // Clear the timeout if scanning stops early
         return;
       }
-
-      // Replace 'YourDeviceName' with the actual name of your BLE device
-      if (device && device.name === 'Tejas Server') {
+      console.log('Scanning for devices...');
+      if (device && device.name === 'Tejas Ad') {
+        console.log('Device found: ', device.name);
+        clearTimeout(timeout); // Clear the timeout when device is found
         bleManager.stopDeviceScan();
         connectToDevice(device);
       }
     });
   };
+  
 
   const connectToDevice = async (device: Device) => {
     try {

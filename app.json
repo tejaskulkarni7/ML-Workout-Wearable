@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tejaskul.MLWorkoutWearable",
+      "bundleIdentifier": "com.tejaskul.MLWorkoutWearable"
     },
     "android": {
       "adaptiveIcon": {
