@@ -108,25 +108,36 @@ export default function RecordScreen() {
 
         // Discover all services and characteristics
         await connectedDevice.discoverAllServicesAndCharacteristics();
-        
-        // Monitor the characteristic for incoming data
-        connectedDevice.monitorCharacteristicForService(
-            '181C', // service UUID
-            '2AB4', // characteristic UUID
-            (error, characteristic) => {
-                if (error) {
-                    console.error('Error monitoring characteristic:', error);
-                    return;
-                }
-                if (characteristic?.value) {
-                    const data = Buffer.from(characteristic.value, 'base64').toString('utf-8');
-                    handleReceivedData(data);
-                }
-            }
-        );
-    } catch (error) {
-        console.error('Error connecting to device:', error);
-    }
+        console.log('Discovered services and characteristics');
+
+        await device.requestMTU(512);
+        // Read the characteristic value
+        bleManager.monitorCharacteristicForDevice(
+          connectedDevice.id, // device identifier
+          '181C', // service UUID
+          '2AB4', // characteristic UUID
+          (error, characteristic) => {
+              if (error) {
+                  console.error('Error monitoring characteristic:', error);
+                  return;
+              }
+              if (characteristic?.value) {
+                  console.log('Raw characteristic value:', characteristic.value);
+                  try {
+                      const data = atob(characteristic.value);
+                      console.log('Received data:', data);
+                      handleReceivedData(data);
+                  } catch (parseError) {
+                      console.error('Error parsing characteristic value:', parseError);
+                  }
+              } else {
+                  console.log('Characteristic value is null or undefined');
+              }
+          }
+      );
+  } catch (error) {
+      console.error('Error connecting to device:', error);
+  }
 };
 
 const handleReceivedData = (data: string) => {
