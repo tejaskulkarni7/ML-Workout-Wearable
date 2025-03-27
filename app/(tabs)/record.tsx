@@ -19,19 +19,9 @@ export default function RecordScreen() {
   const [reps, setReps] = useState(0); // Repetition count
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPlaying) {
-      interval = setInterval(() => {
-        const newRate = Math.max(60, Math.min(120, heartRate + (Math.random() * 10 - 5)));
-        setTotalHeartRate((prev) => prev + newRate);
-        setHeartRateCount((prev) => prev + 1);
-        setHeartRate(newRate);
-        setDataPoints((prev) => [...prev.slice(-20), newRate]); //keeps previous 20 data points on the graph
-      }, 500);
-    }
-    
-    return () => clearInterval(interval); // Cleanup on unmount or pause
-  }, [isPlaying, heartRate]);
+    // No longer simulating the heart rate, only update via Bluetooth
+    return () => {}; // Cleanup if necessary
+  }, [isPlaying]);
 
   const averageHeartRate = heartRateCount > 0 ? (totalHeartRate / heartRateCount).toFixed(1) : "N/A";
 
@@ -81,7 +71,6 @@ export default function RecordScreen() {
       bleManager.stopDeviceScan();
       console.log('Scan timeout reached. Stopped scanning.');
     }, 10000); // 10-second timeout for scanning
-   
     bleManager.startDeviceScan(null, null, (error, device) => {
       if (error) {
         console.error('Error scanning for devices:', error);
@@ -97,7 +86,6 @@ export default function RecordScreen() {
       }
     });
   };
-  
 
   const connectToDevice = async (device: Device) => {
     try {
@@ -150,6 +138,8 @@ const handleReceivedData = (data: string) => {
         setReps(reps);
         setHeartRate(heartRate);
         setDataPoints((prev) => [...prev.slice(-20), heartRate]); // Update chart data
+        setTotalHeartRate((prev) => prev + heartRate);
+        setHeartRateCount((prev) => prev + 1);
     } catch (error) {
         console.error('Error parsing received data:', error);
     }
