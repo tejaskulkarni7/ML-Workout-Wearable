@@ -19,8 +19,7 @@ export default function RecordScreen() {
   const [reps, setReps] = useState(0); // Repetition count
 
   useEffect(() => {
-    // No longer simulating the heart rate, only update via Bluetooth
-    return () => {}; // Cleanup if necessary
+    return () => {};
   }, [isPlaying]);
 
   const averageHeartRate = heartRateCount > 0 ? (totalHeartRate / heartRateCount).toFixed(1) : "N/A";
@@ -205,7 +204,7 @@ const handleReceivedData = (data: string) => {
             backgroundGradientFrom: "#1e2923",
             backgroundGradientTo: "#08130d",
             decimalPlaces: 0,
-            color: (opacity = 1) => `rgba(255, 0, 0, ${opacity})`,
+            color: (opacity = 1) => `rgba(0, 255, 0, ${opacity})`,
             labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
           }}
           bezier
@@ -277,7 +276,7 @@ const styles = StyleSheet.create({
   heartRate: {
     fontSize: 40,
     fontWeight: 'bold',
-    color: '#ff4d4d',
+    color: '#00ff00',
     marginTop: 10,
   },
   graph: {

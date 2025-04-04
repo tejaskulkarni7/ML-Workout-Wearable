@@ -4,6 +4,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { databases, appwriteConfig, account } from '@/lib/appwrite';
 import { Query } from 'react-native-appwrite';
+import Loading from '@/components/Loading';
 
 interface Exercise {
   exercise: string;
@@ -18,6 +19,7 @@ interface Workout {
 }
 
 export default function HistoryScreen() {
+  const [isLoading, setIsLoading] = useState(true);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
 
   useEffect(() => {
@@ -83,10 +85,15 @@ export default function HistoryScreen() {
     } catch (error) {
       console.error('Error fetching workout history:', error);
     }
+      finally{
+        setIsLoading(false);
+      }
   };
 
   return (
+    
     <View style={styles.container}>
+      {isLoading && <Loading/>}
       {/* Header Section */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => router.push('/')} style={styles.topButton}>

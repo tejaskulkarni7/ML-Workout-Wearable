@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { newGoalFunction } from '@/lib/appwrite'; // Your goal creation function
 import { databases, appwriteConfig, account, deleteGoal } from '@/lib/appwrite'; // Adjust as necessary for fetching goals
 import { Query } from 'react-native-appwrite';
+import Loading from '@/components/Loading';
 
 // Define the Document type for your goal
 type GoalDocument = {
@@ -14,9 +15,11 @@ type GoalDocument = {
   reps_goal: number;
   current_rep: number;
   user_id: string;
+  createdAt: string; // Add createdAt property
 };
 
 export default function GoalsScreen() {
+  const [isLoading, setIsLoading] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false); // State to control modal visibility
   const [newGoal, setNewGoal] = useState(''); // State for input field
   const [selectedExercise, setSelectedExercise] = useState('bench press'); // State for selected exercise
@@ -56,7 +59,7 @@ export default function GoalsScreen() {
       user_id: doc.user_id,
       createdAt: doc.createdAt
     }));
-
+    const sortedGoals = goalsData.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     setGoals(goalsData); // Store mapped goals in state
   } catch (error) {
     if (error instanceof Error) {
@@ -64,6 +67,9 @@ export default function GoalsScreen() {
     } else {
       console.error('Error fetching goals:', error);
     }
+  }
+  finally{
+    setIsLoading(false);
   }
 };
 
@@ -95,6 +101,7 @@ export default function GoalsScreen() {
 
   return (
     <View style={styles.container}>
+      {isLoading && <Loading/>}
       {/* Header Section */}
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => router.push('/')} style={styles.topButton}>
@@ -361,6 +368,6 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#4caf50',
+    backgroundColor: '#00ff00',
   },
 });
