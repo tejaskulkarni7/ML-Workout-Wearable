@@ -15,8 +15,6 @@ export default function RecordScreen() {
   const [totalHeartRate, setTotalHeartRate] = useState(70); // Sum of heart rates for average calculation
   const [heartRateCount, setHeartRateCount] = useState(1); // Number of recorded heart rates
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
-  const [exercise, setExercise] = useState(''); // Exercise name
-  const [reps, setReps] = useState(0); // Repetition count
 
   useEffect(() => {
     return () => {};
@@ -24,15 +22,37 @@ export default function RecordScreen() {
 
   const averageHeartRate = heartRateCount > 0 ? (totalHeartRate / heartRateCount).toFixed(1) : "N/A";
 
-  const stopSimulation = () => {
+  const stopSimulation = async () => {
     setIsPlaying(false);
     setHeartRate(70);
     setDataPoints([70]);
-    handleRecordingUpload();
-    disconnectFromDevice();
+    await sendStopSignal();
+    if (!connectedDevice) return;
+    else {
+        connectToDeviceWorkout(connectedDevice);
+    }
   };
+  const sendStopSignal = async () => {
+    if (!connectedDevice) return;
+  
+    const stopCommand = JSON.stringify({ command: "stop" });
+    const encoded = btoa(stopCommand); // base64 encode the JSON string
+  
+    try {
+      await bleManager.writeCharacteristicWithResponseForDevice(
+        connectedDevice.id,
+        '181C', // service UUID
+        '2A3A', // characteristic UUID for writing commands
+        encoded
+      );
+      console.log('Stop signal sent to peripheral');
 
-  const handleRecordingUpload = async () => {
+    } catch (error) {
+      console.error('Error sending stop signal:', error);
+    }
+  };
+  
+  const handleRecordingUpload = async (exercise: string, reps: number) => {
     try {
       await uploadRecording(averageHeartRate, exercise, reps);
     } catch (error) {
@@ -81,12 +101,12 @@ export default function RecordScreen() {
         console.log('Device found: ', device.name);
         clearTimeout(timeout); // Clear the timeout when device is found
         bleManager.stopDeviceScan();
-        connectToDevice(device);
+        connectToDeviceHeartRate(device);
       }
     });
   };
 
-  const connectToDevice = async (device: Device) => {
+  const connectToDeviceHeartRate = async (device: Device) => {
     try {
         // Connect to the device
         const connectedDevice = await device.connect();
@@ -98,51 +118,78 @@ export default function RecordScreen() {
         console.log('Discovered services and characteristics');
 
         await device.requestMTU(512);
-        // Read the characteristic value
+
+        // Monitor heart rate (UUID: 2AB4)
         bleManager.monitorCharacteristicForDevice(
-          connectedDevice.id, // device identifier
-          '181C', // service UUID
-          '2AB4', // characteristic UUID
+          connectedDevice.id,
+          '181C',//service UUID
+          '2AB4',//characteristic UUID
           (error, characteristic) => {
-              if (error) {
-                  console.error('Error monitoring characteristic:', error);
-                  return;
-              }
-              if (characteristic?.value) {
-                  console.log('Raw characteristic value:', characteristic.value);
-                  try {
-                      const data = atob(characteristic.value);
-                      console.log('Received data:', data);
-                      handleReceivedData(data);
-                  } catch (parseError) {
-                      console.error('Error parsing characteristic value:', parseError);
-                  }
-              } else {
-                  console.log('Characteristic value is null or undefined');
-              }
+            if (error) {
+              console.error('Heart rate monitoring error:', error);
+              return;
+            }
+            if (characteristic?.value) {
+              const data = atob(characteristic.value);
+              console.log('Heart rate data:', data);
+              handleHeartRateData(data);
+            }
           }
-      );
+        );
+
   } catch (error) {
       console.error('Error connecting to device:', error);
   }
 };
+const connectToDeviceWorkout = async (device: Device) => {
+  try {
+      // Monitor exercise + reps (UUID: 2AC8)
+      bleManager.monitorCharacteristicForDevice(
+        device.id,
+        '181C',
+        '2AC8',
+        (error, characteristic) => {
+          if (error) {
+            console.error('Exercise data error:', error);
+            return;
+          }
+          if (characteristic?.value) {
+            const data = atob(characteristic.value);
+            console.log('Exercise data:', data);
+            handleExerciseData(data);
+          }
+        }
+      );
 
-const handleReceivedData = (data: string) => {
-    try {
-        // Assuming the server sends JSON data
-        const parsedData = JSON.parse(data);
-        const { exercise, reps, heartRate } = parsedData;
-
-        setExercise(exercise);
-        setReps(reps);
-        setHeartRate(heartRate);
-        setDataPoints((prev) => [...prev.slice(-20), heartRate]); // Update chart data
-        setTotalHeartRate((prev) => prev + heartRate);
-        setHeartRateCount((prev) => prev + 1);
-    } catch (error) {
-        console.error('Error parsing received data:', error);
-    }
+} catch (error) {
+    console.error('Error connecting to device:', error);
+}
 };
+
+const handleHeartRateData = (data: string) => {
+  try {
+    const parsed = JSON.parse(data);
+    const { heartRate } = parsed;
+    setHeartRate(heartRate);
+    setDataPoints((prev) => [...prev.slice(-20), heartRate]);
+    setTotalHeartRate((prev) => prev + heartRate);
+    setHeartRateCount((prev) => prev + 1);
+  } catch (err) {
+    console.error('Failed to parse heart rate data:', err);
+  }
+};
+
+const handleExerciseData = async (data: string) => {
+  try {
+    const parsed = JSON.parse(data);
+    const { exercise, reps } = parsed;
+    await handleRecordingUpload(exercise, reps);
+    await disconnectFromDevice();
+  } catch (err) {
+    console.error('Failed to parse exercise data:', err);
+  }
+};
+
 
   const disconnectFromDevice = async () => {
     if (connectedDevice) {
