@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { StyleSheet, ScrollView, View, Text, TouchableOpacity, PermissionsAndroid, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LineChart } from "react-native-chart-kit"; 
@@ -6,7 +7,6 @@ import { router } from 'expo-router';
 import { uploadRecording } from '@/lib/appwrite';
 import { BleManager, Device } from 'react-native-ble-plx';
 
-const bleManager = new BleManager();
 
 export default function RecordScreen() {
   const [dataPoints, setDataPoints] = useState([70]); // Initial dummy data for heart rate
@@ -15,10 +15,20 @@ export default function RecordScreen() {
   const [totalHeartRate, setTotalHeartRate] = useState(70); // Sum of heart rates for average calculation
   const [heartRateCount, setHeartRateCount] = useState(1); // Number of recorded heart rates
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
+  const [bleManager, setBleManager] = useState(new BleManager());
 
-  useEffect(() => {
-    return () => {};
-  }, [isPlaying]);
+  useFocusEffect(
+    useCallback(() => {
+      // Screen is focused — do nothing here
+  
+      return () => {
+        // Screen is unfocused — disconnect BLE
+        console.log("Screen unfocused — disconnecting BLE device");
+        disconnectFromDevice();
+      };
+    }, [connectedDevice])
+  );
+  
 
   const averageHeartRate = heartRateCount > 0 ? (totalHeartRate / heartRateCount).toFixed(1) : "N/A";
 
@@ -29,6 +39,7 @@ export default function RecordScreen() {
     await sendStopSignal();
     if (!connectedDevice) return;
     else {
+        console.log('INSIDE')
         connectToDeviceWorkout(connectedDevice);
     }
   };
@@ -97,7 +108,8 @@ export default function RecordScreen() {
         return;
       }
       console.log('Scanning for devices...');
-      if (device && device.name === 'Tejas Ad') {
+        //if (device && device.name === 'Tejas Ad') {
+        if (device && device.name === 'MyBLEWearable') {
         console.log('Device found: ', device.name);
         clearTimeout(timeout); // Clear the timeout when device is found
         bleManager.stopDeviceScan();
@@ -143,8 +155,10 @@ export default function RecordScreen() {
 };
 const connectToDeviceWorkout = async (device: Device) => {
   try {
+      await device.discoverAllServicesAndCharacteristics();
+      console.log('Discovered services and characteristics');
       // Monitor exercise + reps (UUID: 2AC8)
-      bleManager.monitorCharacteristicForDevice(
+      const subscription = bleManager.monitorCharacteristicForDevice(
         device.id,
         '181C',
         '2AC8',
@@ -155,6 +169,7 @@ const connectToDeviceWorkout = async (device: Device) => {
           }
           if (characteristic?.value) {
             const data = atob(characteristic.value);
+            subscription.remove();
             console.log('Exercise data:', data);
             handleExerciseData(data);
           }
@@ -197,6 +212,8 @@ const handleExerciseData = async (data: string) => {
         await connectedDevice.cancelConnection();
         setConnectedDevice(null);
         console.log('Disconnected from device');
+        bleManager.destroy();
+        console.log('BLE Manager destroyed');
       } catch (error) {
         console.error('Error disconnecting from device:', error);
       }
@@ -208,6 +225,10 @@ const handleExerciseData = async (data: string) => {
       // Pause simulation, but do not disconnect the device
       setIsPlaying(false);
     } else {
+      if (!bleManager) {
+        const manager = new BleManager();
+        setBleManager(manager);
+      }
       // Start scanning and device connection, and simulate data if not already connected
       if (!connectedDevice) {
         startScanning();
