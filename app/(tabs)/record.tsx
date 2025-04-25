@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { StyleSheet, ScrollView, View, Text, TouchableOpacity, PermissionsAndroid, Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
@@ -16,6 +16,12 @@ export default function RecordScreen() {
   const [heartRateCount, setHeartRateCount] = useState(1); // Number of recorded heart rates
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
   const [bleManager, setBleManager] = useState(new BleManager());
+  const isPlayingRef = useRef(isPlaying);
+
+  // 2. Sync ref with state
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
 
   useFocusEffect(
     useCallback(() => {
@@ -141,7 +147,7 @@ export default function RecordScreen() {
               console.error('Heart rate monitoring error:', error);
               return;
             }
-            if (characteristic?.value) {
+            if (characteristic?.value && isPlayingRef.current) {
               const data = atob(characteristic.value);
               console.log('Heart rate data:', data);
               handleHeartRateData(data);
