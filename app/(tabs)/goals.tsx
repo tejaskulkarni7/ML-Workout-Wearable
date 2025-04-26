@@ -3,8 +3,8 @@ import { StyleSheet, ScrollView, View, Text, TouchableOpacity, Modal, TextInput 
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Picker } from '@react-native-picker/picker';
 import { router } from 'expo-router';
-import { newGoalFunction } from '@/lib/appwrite'; // Your goal creation function
-import { databases, appwriteConfig, account, deleteGoal } from '@/lib/appwrite'; // Adjust as necessary for fetching goals
+import { newGoalFunction } from '@/lib/appwrite'; 
+import { databases, appwriteConfig, account, deleteGoal } from '@/lib/appwrite'; 
 import { Query } from 'react-native-appwrite';
 import Loading from '@/components/Loading';
 

@@ -1,22 +1,31 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { router } from 'expo-router';
-import { createUser } from '@/lib/appwrite'; // Ensure this function is properly implemented
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import { router } from "expo-router";
+import { createUser } from "@/lib/appwrite"; // Ensure this function is properly implemented
 
 export default function SignupScreen() {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSignUp = async () => {
     try {
       await createUser(email, password, username);
-      Alert.alert('Success', 'Account created successfully!');
-      router.push('./login'); // Navigate to login screen
-      console.log("in handlesignup")
-
+      Alert.alert("Success", "Account created successfully!");
+      router.push("./login"); // Navigate to login screen
+      console.log("in handlesignup");
     } catch (error) {
-      Alert.alert('Error', error.message || 'Something went wrong. Please try again.');
+      Alert.alert(
+        "Error",
+        (error instanceof Error ? error.message : "Something went wrong. Please try again.")
+      );
     }
   };
 
@@ -54,7 +63,10 @@ export default function SignupScreen() {
         <Text style={styles.buttonText}>Sign Up</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => router.push('./login')} style={styles.link}>
+      <TouchableOpacity
+        onPress={() => router.push("./login")}
+        style={styles.link}
+      >
         <Text style={styles.linkText}>Already have an account? Log in</Text>
       </TouchableOpacity>
     </View>
@@ -64,40 +76,40 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#151718',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#151718",
   },
   title: {
     fontSize: 24,
-    color: '#fff',
-    fontWeight: 'bold',
+    color: "#fff",
+    fontWeight: "bold",
     marginBottom: 20,
   },
   input: {
-    width: '80%',
-    backgroundColor: '#333',
+    width: "80%",
+    backgroundColor: "#333",
     borderRadius: 5,
     padding: 10,
-    color: '#fff',
+    color: "#fff",
     marginBottom: 20,
   },
   submitButton: {
-    backgroundColor: '#e63946',
+    backgroundColor: "#e63946",
     padding: 10,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 5,
-    width: '80%',
+    width: "80%",
   },
   buttonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
   },
   link: {
     marginTop: 15,
   },
   linkText: {
-    color: '#e63946',
-    textDecorationLine: 'underline',
+    color: "#e63946",
+    textDecorationLine: "underline",
   },
 });
