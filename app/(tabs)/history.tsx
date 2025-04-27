@@ -77,12 +77,14 @@ const BarChartSection = ({
         yAxisLabel=""
         yAxisSuffix=" kcal"
         chartConfig={{
-          backgroundGradientFrom: "#1E2923",
-          backgroundGradientTo: "#08130D",
-          color: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
+          backgroundGradientFrom: "#1e2923",
+          backgroundGradientTo: "#08130d",
+          color: () => `rgba(0, 255, 0, 1)`,
           labelColor: () => "#fff",
           barPercentage: 0.5,
-        }}
+          fillShadowGradient: "#00ff00", // <--- solid green
+          fillShadowGradientOpacity: 1,   // <--- fully opaque
+        }}        
         style={{ marginVertical: 10, borderRadius: 16 }}
       />
     </View>
