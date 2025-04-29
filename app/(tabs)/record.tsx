@@ -304,8 +304,8 @@ export default function RecordScreen() {
         <View style={styles.liveValueContainer}>
           <Text style={styles.liveValueText}>Live Heart Rate:</Text>
           <Text style={styles.heartRate}>{Math.round(heartRate)} bpm</Text>
-          <Text>Average Heart Rate: {averageHeartRate} bpm</Text>
-          <Text>Elapsed Time: {formatTime(elapsedTime)}</Text>
+          <Text style={{ color: "#fff" }}>Average Heart Rate: {averageHeartRate} bpm</Text>
+          <Text style={{ color: "#fff" }}>Elapsed Time: {formatTime(elapsedTime)}</Text>
         </View>
 
         {/* Real-Time Graph */}
