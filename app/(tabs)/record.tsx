@@ -266,7 +266,7 @@ export default function RecordScreen() {
         const manager = new BleManager();
         setBleManager(manager);
       }
-      // Start scanning and device connection, and simulate data if not already connected
+      // Start scanning and device connection
       if (!connectedDevice) {
         startScanning();
       }
