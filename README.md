@@ -1,52 +1,39 @@
-# Welcome to your Expo app 👋
+# Welcome to the mobile app for On-Device ML Workout Wearable 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is an [Expo](https://expo.dev) React Native project. Backend service is provided by Appwrite. 
 
-## Get started
-
+## Getting Started
+### Option 1:
 1. Install dependencies
-
    ```bash
    npm install
    ```
-
 2. Start the app
-
    ```bash
     remember to go to your wifi connection settings and select Private connection (to allow access to other connections)
     npx expo login
     npx expo start --tunnel
    ```
+3. Open the app
+   ```bash
+   you can run the app in ios or android emulators. The record page, however, requires a physical android device as it uses bluetooth.
+   ```
+### Option 2:
+1. Open the .apk file provided in this repository on an Android device
 
-In the output, you'll find options to open the app in a
+## Key Features
+The app has several key features/pages. Its primary use case is the record feature that allows users to record their workout. Once recording has started, the record page displays a live feed of heart rate data. The user is able to pause, resume, and stop the workout. Additional, supplementary, features are also provided.
+   - A weekly workout summary
+   - Workout goal creation and tracking
+   - User settings (configure weight, logout, delete account)
+   - Workout history (exercises, reps, duration, calories burnt, average heart rate)
+   - Workout recording with live heart rate feed
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Usage
+Start the app and create an account. Log in with those credentials. Configure your user weight in 'settings' if you would like to view calories burned. Create new goals in the goals page by clicking the 'plus' icon, selecting a particular exercise, and then selecting a count of reps.
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+Use the app when performing a workout of either bench press, deadlift, or squat. Have the wearable device turned on and strapped on to your right wrist. Right before starting the workout, hit the 'play' button twice on the Record page. This will start the workout and display a live graphical visualization of heart rate. Once the workout is complete, hit the big red stop button and wait for a few seconds. Then you may turn the wearable device off or repeat the same process for a different workout 'set'.
 
-## Get a fresh project
+Observe each set being added to your workouts in the history page. Each workout can be clicked on to view more information. Observe working towards your goals with the progress bar. This can be found on the home page.
 
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+You may sign out, or delete your account from the settings page.
