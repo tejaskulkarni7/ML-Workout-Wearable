@@ -18,7 +18,7 @@ This is an [Expo](https://expo.dev) React Native project. Backend service is pro
    ```bash
    you can run the app in ios or android emulators. The record page, however, requires a physical android device as it uses bluetooth.
    ```
-### Option 2
+### Option 2:
 1. Open the .apk file provided in this repository on an Android device
 
 ## Key Features
