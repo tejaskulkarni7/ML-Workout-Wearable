@@ -34,6 +34,11 @@ Start the app and create an account. Log in with those credentials. Configure yo
 
 Use the app when performing a workout of either bench press, deadlift, or squat. Have the wearable device turned on and strapped on to your right wrist. Right before starting the workout, hit the 'play' button twice on the Record page. This will start the workout and display a live graphical visualization of heart rate. Once the workout is complete, hit the big red stop button and wait for a few seconds. Then you may turn the wearable device off or repeat the same process for a different workout 'set'.
 
+
+## Related Repositories:
+   - https://github.com/AsianGod160/ml_workout_wearable (Combined IMU, heart rate, BLE, ML Model Code)
+   - https://github.com/NealC17/senior_design/ (ML Model, Data Preprocessing)
+
 Observe each set being added to your workouts in the history page. Each workout can be clicked on to view more information. Observe working towards your goals with the progress bar. This can be found on the home page.
 
 You may sign out, or delete your account from the settings page.
