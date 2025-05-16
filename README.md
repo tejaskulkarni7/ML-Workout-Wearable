@@ -51,5 +51,6 @@ package.json - Project dependencies and scripts.
 tsconfig.json - TypeScript configuration.
 
 ## Related Repositories:
+   - https://github.com/tejaskulkarni7/ML-Workout-Wearable (Expo Mobile App)
    - https://github.com/AsianGod160/ml_workout_wearable (Combined IMU, heart rate, BLE, ML Model Code)
    - https://github.com/NealC17/senior_design/ (ML Model, Data Preprocessing)
