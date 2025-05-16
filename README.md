@@ -37,6 +37,19 @@ Use the app when performing a workout of either bench press, deadlift, or squat.
 Observe each set being added to your workouts in the history page. Each workout can be clicked on to view more information. Observe working towards your goals with the progress bar. This can be found on the home page.
 You may sign out, or delete your account from the settings page.
 
+## Project Code Structure
+app/: Contains the main application code, including:
+tabs/: Core app screens like goals.tsx, history.tsx, login.tsx, record.tsx, settings.tsx, and signup.tsx.
+lib/: Library files for external services:
+    - appwrite.js - Appwrite SDK configuration and API calls. 
+    - appwrite.test.js - Jest test file for Appwrite integration.
+scripts/ - Utility scripts, such as reset-project.js for resetting the project.
+
+Configuration Files:
+app.json - Expo application configuration.
+package.json - Project dependencies and scripts.
+tsconfig.json - TypeScript configuration.
+
 ## Related Repositories:
    - https://github.com/AsianGod160/ml_workout_wearable (Combined IMU, heart rate, BLE, ML Model Code)
    - https://github.com/NealC17/senior_design/ (ML Model, Data Preprocessing)
